@@ -3,6 +3,8 @@ package com.example.movieappmad24.screens
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.example.movieappmad24.viewmodels.MoviesViewModel
@@ -25,10 +27,13 @@ fun WatchlistScreen(
             )
         }
     ){ innerPadding ->
+        // todo: create own viewModel for watchlist
+        // collect favoriteMovies accordingly
+        val moviesState by moviesViewModel.movies.collectAsState()
 
         MovieList(
             modifier = Modifier.padding(innerPadding),
-            movies = moviesViewModel.favoriteMovies,
+            movies = moviesState,
             navController = navController,
             viewModel = moviesViewModel
         )
