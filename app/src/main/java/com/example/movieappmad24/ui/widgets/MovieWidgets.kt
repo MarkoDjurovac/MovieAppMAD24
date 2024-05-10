@@ -1,4 +1,4 @@
-package com.example.movieappmad24.widgets
+package com.example.movieappmad24.ui.widgets
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -50,28 +51,29 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import com.example.movieappmad24.R
 import com.example.movieappmad24.models.Movie
-import com.example.movieappmad24.models.getMovies
-import com.example.movieappmad24.navigation.Screen
-import com.example.movieappmad24.viewmodels.MoviesViewModel
+import com.example.movieappmad24.models.MovieWithImages
+import com.example.movieappmad24.ui.navigation.Screen
+import com.example.movieappmad24.viewmodels.MovieViewModel
 
 
 @Composable
 fun MovieList(
     modifier: Modifier,
-    movies: List<Movie> = getMovies(),
+    movies: List<MovieWithImages>,
     navController: NavController,
-    viewModel: MoviesViewModel
+    viewModel: MovieViewModel
 ){
     LazyColumn(modifier = modifier) {
         items(movies) { movie ->
             MovieRow(
                 movie = movie,
-                onFavoriteClick = {movieId ->
+                onFavoriteClick = { movieId ->
                     viewModel.toggleFavoriteMovie(movieId)
                 },
                 onItemClick = { movieId ->
-                    navController.navigate(route = Screen.DetailScreen.withId(movieId))
+                    navController.navigate(route = Screen.DetailScreen.route(movieId))
                 }
             )
         }
@@ -81,15 +83,15 @@ fun MovieList(
 @Composable
 fun MovieRow(
     modifier: Modifier = Modifier,
-    movie: Movie,
-    onFavoriteClick: (String) -> Unit = {},
-    onItemClick: (String) -> Unit = {}
+    movie: MovieWithImages,
+    onFavoriteClick: (Long) -> Unit = {},
+    onItemClick: (Long) -> Unit = {}
 ){
     Card(modifier = modifier
         .fillMaxWidth()
         .padding(5.dp)
         .clickable {
-            onItemClick(movie.id)
+            onItemClick(movie.movie.movieId)
         },
         shape = ShapeDefaults.Large,
         elevation = CardDefaults.cardElevation(10.dp)
@@ -97,12 +99,12 @@ fun MovieRow(
         Column {
 
             MovieCardHeader(
-                imageUrl = movie.images[0],
-                isFavorite = movie.isFavorite,
-                onFavoriteClick = { onFavoriteClick(movie.id) }
+                imageUrl = movie.movieImages.firstOrNull()?.imageUrl ?: "",
+                isFavorite = movie.movie.isFavorite,
+                onFavoriteClick = { onFavoriteClick(movie.movie.movieId) }
             )
 
-            MovieDetails(modifier = modifier.padding(12.dp), movie = movie)
+            MovieDetails(modifier = modifier.padding(12.dp), movie = movie.movie)
 
         }
     }
@@ -157,16 +159,18 @@ fun FavoriteIcon(
             modifier = Modifier.clickable {
                 onFavoriteClick()
                 Log.i("MovieWidget", "icon clicked")
-                                          },
-            tint = MaterialTheme.colorScheme.secondary,
+            },
+            tint = if (isFavorite) Color.Red else MaterialTheme.colorScheme.secondary,
             imageVector =
             if (isFavorite) {
+                Icons.Filled.Favorite
                 Icons.Filled.Favorite
             } else {
                 Icons.Default.FavoriteBorder
             },
 
-            contentDescription = "Add to favorites")
+            contentDescription = "Add to favorites"
+        )
     }
 }
 
@@ -223,22 +227,19 @@ fun MovieDetails(modifier: Modifier, movie: Movie) {
 
 
 @Composable
-fun HorizontalScrollableImageView(movie: Movie) {
+fun HorizontalScrollableImageView(movie: MovieWithImages) {
     LazyRow {
-        items(movie.images) { image ->
+        items(movie.movieImages) { image ->
             Card(
                 modifier = Modifier
                     .padding(12.dp)
                     .size(240.dp),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
-
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(image)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Movie poster",
+                    model = image.imageUrl,
+                    contentDescription = "Movie poster, url: ${image.imageUrl}",
+                    placeholder = painterResource(id = R.drawable.movie_image),
                     contentScale = ContentScale.Crop
                 )
             }

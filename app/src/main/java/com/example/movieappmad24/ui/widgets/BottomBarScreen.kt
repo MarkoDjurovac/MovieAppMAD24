@@ -1,10 +1,10 @@
-package com.example.movieappmad24.widgets
+package com.example.movieappmad24.ui.widgets
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.example.movieappmad24.navigation.Screen
+import com.example.movieappmad24.ui.navigation.Screen
 
 sealed class BottomBarScreen(
     val route: String,

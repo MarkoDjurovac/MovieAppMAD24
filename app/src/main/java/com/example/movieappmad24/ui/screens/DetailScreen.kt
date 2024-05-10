@@ -1,4 +1,4 @@
-package com.example.movieappmad24.screens
+package com.example.movieappmad24.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -13,6 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,56 +25,61 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
-import com.example.movieappmad24.viewmodels.MoviesViewModel
-import com.example.movieappmad24.widgets.HorizontalScrollableImageView
-import com.example.movieappmad24.widgets.MovieRow
-import com.example.movieappmad24.widgets.SimpleTopAppBar
+import com.example.movieappmad24.R
+import com.example.movieappmad24.data.MovieDatabase
+import com.example.movieappmad24.data.MovieRepository
+import com.example.movieappmad24.viewmodels.DetailScreenViewModel
+import com.example.movieappmad24.viewmodels.ViewModelFactory
+import com.example.movieappmad24.ui.widgets.HorizontalScrollableImageView
+import com.example.movieappmad24.ui.widgets.MovieRow
+import com.example.movieappmad24.ui.widgets.SimpleTopAppBar
 
 @Composable
 fun DetailScreen(
-    movieId: String?,
+    movieId: Long,
     navController: NavController,
-    moviesViewModel: MoviesViewModel
 ) {
+    val db = MovieDatabase.getDatabase(LocalContext.current)
+    val repository = MovieRepository(movieDao = db.movieDao(), movieImageDao = db.movieImageDao())
+    val factory = ViewModelFactory(repository, movieId)
+    val viewModel: DetailScreenViewModel = viewModel(factory = factory)
 
-    movieId?.let {
-        val movie = moviesViewModel.movies.filter { movie -> movie.id == movieId }[0]
+    val movie by viewModel.movie.collectAsState()
 
-
-        Scaffold (
-            topBar = {
-                SimpleTopAppBar(title = movie.title) {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Go back"
-                        )
-                    }
-                }
-            }
-        ){ innerPadding ->
-            Column {
-                MovieRow(
-                    modifier = Modifier.padding(innerPadding),
-                    movie = movie,
-                    onFavoriteClick = { id -> moviesViewModel.toggleFavoriteMovie(id) }
+    Scaffold (
+        topBar = {
+            SimpleTopAppBar(title = movie.movie.title) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Go back"
                     )
-
-                Divider(modifier = Modifier.padding(4.dp))
-
-                Column {
-                    Text("Movie Trailer")
-                    VideoPlayer(trailerURL = movie.trailer)
                 }
-
-                Divider(modifier = Modifier.padding(4.dp))
-
-                HorizontalScrollableImageView(movie = movie)
             }
+        }
+    ){ innerPadding ->
+        Column {
+            MovieRow(
+                modifier = Modifier.padding(innerPadding),
+                movie = movie,
+                onFavoriteClick = { _ -> viewModel.toggleFavoriteMovie() }
+                )
+
+            Divider(modifier = Modifier.padding(4.dp))
+
+            Column {
+                Text("Movie Trailer")
+                VideoPlayer(trailerURL = movie.movie.trailer)
+            }
+
+            Divider(modifier = Modifier.padding(4.dp))
+
+            HorizontalScrollableImageView(movie = movie)
         }
     }
 }
@@ -90,7 +96,7 @@ fun VideoPlayer(trailerURL: String){
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(
-                "android.resource://${context.packageName}/${context.resources.getIdentifier(trailerURL, "raw", context.packageName)}"
+                "android.resource://${context.packageName}/${R.raw.trailer_placeholder}"
             ))
             prepare()
             playWhenReady = true
@@ -134,5 +140,4 @@ fun VideoPlayer(trailerURL: String){
             }
         }
     )
-
 }

@@ -1,4 +1,4 @@
-package com.example.movieappmad24.screens
+package com.example.movieappmad24.ui.screens
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -11,24 +11,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.movieappmad24.data.MovieDatabase
 import com.example.movieappmad24.data.MovieRepository
-import com.example.movieappmad24.viewmodels.MoviesViewModel
-import com.example.movieappmad24.viewmodels.MoviesViewModelFactory
-import com.example.movieappmad24.widgets.MovieList
-import com.example.movieappmad24.widgets.SimpleBottomAppBar
-import com.example.movieappmad24.widgets.SimpleTopAppBar
+import com.example.movieappmad24.viewmodels.ViewModelFactory
+import com.example.movieappmad24.viewmodels.WatchlistScreenViewModel
+import com.example.movieappmad24.ui.widgets.MovieList
+import com.example.movieappmad24.ui.widgets.SimpleBottomAppBar
+import com.example.movieappmad24.ui.widgets.SimpleTopAppBar
 
 @Composable
-fun HomeScreen(
-    navController: NavController
-) {
+fun WatchlistScreen(navController: NavController){
     val db = MovieDatabase.getDatabase(LocalContext.current)
-    val repository = MovieRepository(movieDao = db.movieDao())
-    val factory = MoviesViewModelFactory(repository = repository)
-    val viewModel: MoviesViewModel = viewModel(factory = factory)
+    val repository = MovieRepository(movieDao = db.movieDao(), movieImageDao = db.movieImageDao())
+    val factory = ViewModelFactory(repository = repository)
+    val viewModel: WatchlistScreenViewModel = viewModel(factory = factory)
+
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
 
     Scaffold (
         topBar = {
-            SimpleTopAppBar(title = "Movie App")
+            SimpleTopAppBar(title = "Your Watchlist")
         },
         bottomBar = {
             SimpleBottomAppBar(
@@ -36,14 +36,11 @@ fun HomeScreen(
             )
         }
     ){ innerPadding ->
-        val moviesState by viewModel.movies.collectAsState()
-
         MovieList(
             modifier = Modifier.padding(innerPadding),
-            movies = moviesState,
+            movies = favoriteMovies,
             navController = navController,
             viewModel = viewModel
         )
     }
 }
-

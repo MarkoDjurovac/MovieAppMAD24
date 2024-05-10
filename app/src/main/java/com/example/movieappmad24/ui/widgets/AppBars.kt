@@ -1,4 +1,4 @@
-package com.example.movieappmad24.widgets
+package com.example.movieappmad24.ui.widgets
 
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
